@@ -31,9 +31,6 @@ class PresentationPart(XmlPart):
         rId = self.relate_to(slide_part, RT.SLIDE)
         return rId, slide_part.slide
 
-    def add_layout(self):
-        pass
-
     @property
     def core_properties(self):
         """

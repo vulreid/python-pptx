@@ -10,7 +10,7 @@ from .chart import ChartPart
 from ..opc.constants import CONTENT_TYPE as CT, RELATIONSHIP_TYPE as RT
 from ..opc.package import XmlPart
 from ..opc.packuri import PackURI
-from ..oxml.slide import CT_NotesMaster, CT_NotesSlide, CT_Slide
+from ..oxml.slide import CT_NotesMaster, CT_NotesSlide, CT_Slide, CT_SlideLayout
 from ..oxml.theme import CT_OfficeStyleSheet
 from ..slide import NotesMaster, NotesSlide, Slide, SlideLayout, SlideMaster
 from ..util import lazyproperty
@@ -258,6 +258,17 @@ class SlideLayoutPart(BaseSlidePart):
     ``ppt/slideLayouts/slideLayout[1-9][0-9]*.xml``.
     """
 
+    @classmethod
+    def new(cls, partname, package, template, slide_master):
+        """
+        Return a newly-created blank slide part having *partname* and related
+        to *slide_layout_part*.
+        """
+        sld_layout = CT_SlideLayout.new(template)
+        slide_layout_part = cls(partname, CT.PML_SLIDE_LAYOUT, sld_layout, package)
+        slide_layout_part.relate_to(slide_master, RT.SLIDE_MASTER)
+        return slide_layout_part
+
     @lazyproperty
     def slide_layout(self):
         """
@@ -292,3 +303,18 @@ class SlideMasterPart(BaseSlidePart):
         The |SlideMaster| object representing this part.
         """
         return SlideMaster(self._element, self)
+
+    def add_slide_layout(self, template):
+        partname = self.next_slide_layout_partname()
+        slide_layout_part = SlideLayoutPart.new(partname, self.package, template, self)
+        rId = self.relate_to(slide_layout_part, RT.SLIDE_LAYOUT)
+        return rId, slide_layout_part
+
+    def next_slide_layout_partname(self):
+        """
+        Return |PackURI| instance containing the partname for a slide_layout to be
+        appended to provided slide_master collection, e.g. ``/ppt/slideLayouts/slideLayout12.xml``
+        for a slide_layouts collection containing 11 slide layouts.
+        """
+        partname_str = "/ppt/slideLayouts/slideLayout%d.xml" % (len(self.slide_master.slide_layouts) + 1)
+        return PackURI(partname_str)

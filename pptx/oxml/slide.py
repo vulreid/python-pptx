@@ -4,6 +4,7 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+from lxml import etree
 from pptx.oxml import parse_from_template, parse_xml
 from pptx.oxml.dml.fill import CT_GradientFillProperties
 from pptx.oxml.ns import nsdecls
@@ -260,6 +261,11 @@ class CT_SlideLayout(_BaseSlideElement):
     cSld = OneAndOnlyOne("p:cSld")
     del _tag_seq
 
+    @classmethod
+    def new(cls, x):
+        """Return new `p:sld` element configured as base slide shape."""
+        return parse_xml(x)
+
 
 class CT_SlideLayoutIdList(BaseOxmlElement):
     """
@@ -268,6 +274,27 @@ class CT_SlideLayoutIdList(BaseOxmlElement):
     """
 
     sldLayoutId = ZeroOrMore("p:sldLayoutId")
+
+    def add_sldLayoutId(self, rId):
+        """
+        Return a reference to a newly created <p:sldLayoutId> child element having
+        its r:id attribute set to *rId*.
+        """
+        return etree.SubElement(self, etree.QName(self.nsmap.get('p'), 'sldLayoutId'), attrib={
+            'id': str(self._next_id),
+            etree.QName(self.nsmap.get('r'), 'id'): rId
+        })
+
+    @property
+    def _next_id(self):
+        """
+        Return the next available slide ID as an int. Valid slide IDs start
+        at 256. The next integer value greater than the max value in use is
+        chosen, which minimizes that chance of reusing the id of a deleted
+        slide.
+        """
+        id_str_lst = self.xpath("./p:sldLayoutId/@id")
+        return max([255] + [int(id_str) for id_str in id_str_lst]) + 1
 
 
 class CT_SlideLayoutIdListEntry(BaseOxmlElement):

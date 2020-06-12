@@ -445,6 +445,11 @@ class SlideLayouts(ParentedElementProxy):
         # --including images (not used elsewhere) and hyperlinks
         slide_layout.slide_master.part.drop_rel(target_sldLayoutId.rId)
 
+    def add_slide_layout(self, template):
+        rId, slide_layout = self.part.add_slide_layout(template)
+        self._sldLayoutIdLst.add_sldLayoutId(rId)
+        return slide_layout
+
 
 class SlideMaster(_BaseMaster):
     """
